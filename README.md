@@ -5,7 +5,7 @@ All the meshes have a baked diffuse map and an additional AO map.
 
 **View the [Online Demo](https://0beqz.github.io/three.js-studio-human-demo/)**
 <sub>
-<br>Download size: 45 MB
+<br>Download size: 16 MB
 </sub>
 
 ## Screenshot
