@@ -24,7 +24,7 @@
 </head>
 
 <body>
-	<div id="loading">Loading scene...</div>
+	<div id="loading">Loading scene... 0%</div>
 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r127/three.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/postprocessing@6.21.3/build/postprocessing.min.js"></script>
@@ -73,12 +73,15 @@
 		orbit.maxDistance = 4;
 		orbit.rotateSpeed = 0.6;
 
+		let manager = new THREE.LoadingManager();
+
 		let loader = new THREE.GLTFLoader();
 
 		let depthOfFieldEffect = new POSTPROCESSING.DepthOfFieldEffect(camera, { focusDistance: 0, focalLength: 0.075, bokehScale: 12.5 });
 
-		let manager = new THREE.LoadingManager();
 		let smaaImageLoader = new POSTPROCESSING.SMAAImageLoader(manager);
+
+		let loadingNode = document.getElementById("loading");
 
 		let composer;
 
@@ -102,7 +105,11 @@
 				new POSTPROCESSING.GammaCorrectionEffect({ gamma: 1.075 })
 			));
 
-			loader.load("glb/studio_bake_human.glb", handeModel);
+			let size = 46867880;
+
+			loader.load("glb/studio_bake_human.glb", handeModel, xhr => {
+				loadingNode.textContent = "Loading scene... " + Math.round(xhr.loaded / size * 100) + "%";
+			});
 		});
 
 		function handeModel(gltf) {
@@ -143,7 +150,6 @@
 
 		function startRendering() {
 			// finally render
-			let loadingNode = document.getElementById("loading");
 			loadingNode.parentNode.removeChild(loadingNode);
 			document.body.appendChild(renderer.domElement);
 			render();
