@@ -3,9 +3,10 @@
 A simple demo scene that was unwrapped and baked in Blender.
 All the meshes have a baked diffuse map and an additional AO map.
 
-View the [Online Demo]()
-<br>
-Download size: 45 MB
+**View the [Online Demo]()**
+<sub>
+<br>Download size: 45 MB
+</sub>
 
 ## Screenshot
 <img src="img/image.png" />
