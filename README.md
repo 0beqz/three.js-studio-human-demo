@@ -13,4 +13,4 @@ Download size: 45 MB
 * [Studio HDR](https://hdrihaven.com/) by HDRI Haven
 
 ## Screenshot
-<img src="image.png" />
+<img src="img/image.png" />
