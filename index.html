@@ -1,0 +1,163 @@
+<html>
+
+<head>
+	<title>Three JS Demo Scene</title>
+	<style>
+		body {
+			margin: 0;
+			overflow: hidden;
+			background-color: #F6EBE1;
+		}
+
+		#loading {
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			color: white;
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+			font-size: 32px;
+			transform: translate(-50%, -50%);
+			text-shadow: 4px 4px 59px rgba(0, 0, 0, 0.75);
+			letter-spacing: 2px;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="loading">Loading scene...</div>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r127/three.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/postprocessing@6.21.3/build/postprocessing.min.js"></script>
+	<script src="js/GLTFLoader.js"></script>
+	<script src="js/OrbitControls.js"></script>
+
+	<script>
+		//Scene
+		let scene = new THREE.Scene();
+
+		//Camera
+		let height = window.innerHeight;
+		let width = window.innerWidth;
+		let distance = 1000;
+		let diag = Math.sqrt((height * height) + (width * width))
+		let camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.001, distance);
+		camera.position.set(0, 0, 2.5);
+
+		//Renderer
+		let renderer = new THREE.WebGLRenderer();
+
+		renderer.setPixelRatio(window.devicePixelRatio);
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		renderer.setClearColor(0xEBD3C0);
+		renderer.outputEncoding = THREE.sRGBEncoding;
+
+		window.addEventListener("resize", () => {
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+
+			renderer.setSize(window.innerWidth, window.innerHeight);
+		});
+
+		//LIGHTS
+		let light = new THREE.AmbientLight(0xffffff, 2.25);
+		scene.add(light);
+
+		let directionalLight = new THREE.DirectionalLight(0xEBD3C0, 2);
+		scene.add(directionalLight);
+
+		//OrbitControls
+		orbit = new THREE.OrbitControls(camera, renderer.domElement);
+		orbit.enablePan = false;
+		orbit.maxPolarAngle = Math.PI / 2;
+		orbit.minDistance = 1.5;
+		orbit.maxDistance = 4;
+		orbit.rotateSpeed = 0.6;
+
+		let loader = new THREE.GLTFLoader();
+
+		let depthOfFieldEffect = new POSTPROCESSING.DepthOfFieldEffect(camera, { focusDistance: 0, focalLength: 0.075, bokehScale: 12.5 });
+
+		let manager = new THREE.LoadingManager();
+		let smaaImageLoader = new POSTPROCESSING.SMAAImageLoader(manager);
+
+		let composer;
+
+		smaaImageLoader.load(([search, area]) => {
+			let smaaEffect = new POSTPROCESSING.SMAAEffect(
+				search,
+				area,
+				POSTPROCESSING.SMAAPreset.HIGH,
+				POSTPROCESSING.EdgeDetectionMode.COLOR
+			);
+
+			smaaEffect.edgeDetectionMaterial.setEdgeDetectionThreshold(0.05);
+
+			composer = new POSTPROCESSING.EffectComposer(renderer);
+			composer.addPass(new POSTPROCESSING.RenderPass(scene, camera));
+			composer.addPass(new POSTPROCESSING.EffectPass(camera,
+				smaaEffect,
+				new POSTPROCESSING.BloomEffect({ luminanceThreshold: 0.95 }),
+				depthOfFieldEffect,
+				new POSTPROCESSING.VignetteEffect({ offset: 0.35 }),
+				new POSTPROCESSING.GammaCorrectionEffect({ gamma: 1.075 })
+			));
+
+			loader.load("glb/studio_bake_human.glb", handeModel);
+		});
+
+		function handeModel(gltf) {
+			let object = gltf.scene;
+
+			object.traverse(c => {
+				if (c.name === "plane") {
+					c.material = new THREE.MeshBasicMaterial({ map: c.material.map, side: THREE.DoubleSide, aoMap: c.material.aoMap });
+				} else if (c.name === "human") {
+					c.material = new THREE.MeshStandardMaterial({
+						map: c.material.map,
+						side: THREE.DoubleSide,
+						metalness: 0.75,
+						roughness: 0.3,
+						envMapIntensity: 1.575,
+						aoMap: c.material.aoMap
+					});
+
+					c.material.color.multiplyScalar(1.4);
+
+					let textureLoader = new THREE.TextureLoader();
+
+					textureLoader.load("hdr/studio.jpg", texture => {
+						let envMapRenderTarget = new THREE.WebGLCubeRenderTarget(1024).fromEquirectangularTexture(renderer, texture);
+						c.material.envMap = envMapRenderTarget;
+
+						startRendering();
+					});
+				}
+
+				if (c.isMesh) {
+					c.material.color.multiplyScalar(1.25);
+				}
+			});
+
+			scene.add(object);
+		}
+
+		function startRendering() {
+			// finally render
+			let loadingNode = document.getElementById("loading");
+			loadingNode.parentNode.removeChild(loadingNode);
+			document.body.appendChild(renderer.domElement);
+			render();
+		}
+
+		let clock = new THREE.Clock();
+
+		function render() {
+			requestAnimationFrame(render);
+
+			orbit.update();
+			composer.render(clock.getDelta());
+		}
+	</script>
+</body>
+
+</html>
