@@ -3,7 +3,7 @@
 A simple demo scene that was unwrapped and baked in Blender.
 All the meshes have a baked diffuse map and an additional AO map.
 
-**View the [Online Demo]()**
+**View the [Online Demo](https://0beqz.github.io/three.js-studio-human-demo/)**
 <sub>
 <br>Download size: 45 MB
 </sub>
